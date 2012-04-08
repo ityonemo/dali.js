@@ -144,7 +144,7 @@ var dali =
   graphicsextensions:
   {
   },
-}
+};
 
 //add a few utility functions to the svgrect prototype
 
