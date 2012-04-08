@@ -134,36 +134,37 @@ var dali =
   graphicsextensions:
   {
   },
+}
 
-  BBox: function(_x1, _y1, _x2, _y2)
+//add a few utility functions to the svgrect prototype
+
+SVGRect.prototype.__defineSetter__("left",function(val){this.x = val});
+SVGRect.prototype.__defineGetter__("left",function(){return this.x});
+SVGRect.prototype.__defineSetter__("top",function(val){this.y = val});
+SVGRect.prototype.__defineGetter__("top",function(){return this.y});
+SVGRect.prototype.__defineSetter__("right",function(val){if(val > this.x) this.width = val - this.x});
+SVGRect.prototype.__defineGetter__("right",function(){return this.x + this.width});
+SVGRect.prototype.__defineSetter__("bottom",function(val){if (val > this.y) this.height = val - this.y});
+SVGRect.prototype.__defineGetter__("bottom",function(){return this.y + this.width});
+
+SVGRect.prototype.contains = function(x, y)
+{
+  if (x.constructor.name == "SVGRect") // check to see if we have passed an SVGRect.
   {
-    $.extend(this,
-    {
-      //basic variables of the BBox.
-      left: Math.min(_x1, _x2),
-      top: Math.min(_y1, _y2),
-      right: Math.max(_x1,_x2),
-      bottom: Math.max(_y1,_y2),
+    return ((x.left >= this.left) && (x.right <= this.right) && (y.top >= this.top) && (y.bottom <= this.bottom)) //assume it's anotherbbox.
+  } else if (x.constructor.name == "SVGPoint")
+  {
+    return ((x.x >= this.left) && (x.x <= this.right) && (x.y >= this.top) && (x.y <= this.bottom))
+  } else if (!(isNaN(y) || isNaN(x)))
+  {
+    return ((x >= this.left) && (x <= this.right) && (y >= this.top) && (y <= this.bottom));                       //assume it's a point.
+  }
+}
 
-      //check to see if another BBox or a point lies within this BBox.
-      contains: function(x, y)
-      {
-        return (isNaN(x) ?
-          ((x.left >= this.left) && (x.right <= this.right) && (y.top >= this.top) && (y.bottom <= this.bottom)) : //assume it's anotherbbox.
-          ((x >= this.left) && (x <= this.right) && (y >= this.top) && (y <= this.bottom)));                       //assume it's a point.
-      },
-
-      //check to see if another BBox overlaps this BBox.
-      overlaps: function(box)
-      { //overlapping is merely the opposite of being completely disjoint.
-        return !((box.left > this.right) || (box.right < this.left) || (box.top < this.bottom) || (box.bottom > this.top));
-      }
-    });
-
-    //jQuery extend doesn't transfer getters and setters, so we have to use this.
-    this.__defineGetter__("width",function() {return this.right - this.left;});
-    this.__defineGetter__("height",function() {return this.bottom - this.top;});
-    this.__defineSetter__("width",function(val){this.right = this.left + val;});
-    this.__defineSetter__("height",function(val){this.right = this.left + val;});
+SVGRect.prototype.overlaps = function(box)
+{
+  if (box.constructor.name == "SVGRect") // check to make sure we have passed an SVGRect
+  {
+    return !((box.left > this.right) || (box.right < this.left) || (box.top < this.bottom) || (box.bottom > this.top));
   }
 }
