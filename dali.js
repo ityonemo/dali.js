@@ -8,7 +8,7 @@
 var dali = 
 {
   //creates and returns an SVG DOM object.
-  SVG: function(parent, _width, _height)
+  SVG: function(parent, _width, _height, id)
   {
     //create the object in the DOM.
     var svgobject = document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -17,8 +17,16 @@ var dali =
     $(svgobject).css("overflow-x","hidden").css("overflow-y","hidden").css("position","relative");
   
     //set the width and height, if applicable.
-    if ((_width) && (_height))
+    if (!(isNaN(_width) || isNaN(_height)))
       $(svgobject).attr("width", _width).attr("height", _height);
+    else if (width)
+      $(svgobject).attr("id",_width); //let's guess that the _width variable contains the name.
+
+    //set the name, if applicable.
+    if (id)
+    {
+      $(svgobject).attr("id", id);
+    }
 
     $.extend(svgobject,
     {
@@ -102,10 +110,12 @@ var dali =
       return textobject;
     },
 
-    group: function()
+    group: function(id)
     {
       var groupobject = dali.create("g", this);
       $.extend(groupobject, dali.creatorextensions);
+      if (id)
+        $(groupobject).attr("id", id);
       return groupobject;
     }
   },

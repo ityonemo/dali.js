@@ -42,6 +42,5 @@ surface.removeChild(g);
 //TODO
 // manage transformations
 // complex path management
-// bounding box information retrieval
 // layer support.
 
