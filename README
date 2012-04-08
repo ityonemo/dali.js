@@ -39,8 +39,10 @@ $(e).mousedown(function(event){alert("hi mom!");};
 g.removeChild(e);
 surface.removeChild(g);
 
+//transformations.  Use dali.XXXX where XXXX is the transformation.
+
+e.transform(new dali.Translate(dx,dy));
+
 //TODO
-// manage transformations
 // complex path management
-// layer support.
 

@@ -124,6 +124,7 @@ var dali =
   create: function (tag, dom)
   {
     var newobject = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    delete newobject.transform;
     $.extend(newobject, dali.graphicsextensions); // extend with all of our graphics extensions functions.
     dom.appendChild(newobject);
 
@@ -147,8 +148,34 @@ var dali =
     {
       var parent = this.parentNode;
       parent.removeChild(this);
+    },
+
+    transform: function(transformation, clobber)
+    {
+      var current = (clobber) ? "" : $(this).attr("transform");
+      $(this).attr("transform", transformation.toString() + current);
     }
   },
+
+  Translate: function(x, y)
+  {
+    this.toString = function(){return "translate(" + x + "," + y + ")";};
+  },
+
+  Scale: function(x, y)
+  {
+    this.toString = (y) ? function(){return "scale(" + x + "," + y + ")";} : function(){return "scale(" + x + ")";}
+  },
+
+  Rotation: function(t, x, y)
+  {
+    this.toString = (x && y) ? function(){return "rotate(" + t + "," + x + "," + y + ")";} : function(){ return "rotate(" + t + ")";}
+  },
+
+  Skew: function(t, direction)
+  {
+    this.toString = function(){return "skew" + ((direction == "Y") || (direction == "y") ? "Y" : "X") + "(" + t + ")";}
+  }
 };
 
 //add a few utility functions to the svgrect prototype
