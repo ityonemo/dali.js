@@ -161,7 +161,7 @@ SVGRect.prototype.contains = function(x, y)
 {
   if (x.constructor.name == "SVGRect") // check to see if we have passed an SVGRect.
   {
-    return ((x.left >= this.left) && (x.right <= this.right) && (y.top >= this.top) && (y.bottom <= this.bottom)) //assume it's anotherbbox.
+    return ((x.left >= this.left) && (x.right <= this.right) && (x.top >= this.top) && (x.bottom <= this.bottom)) //assume it's anotherbbox.
   } else if (x.constructor.name == "SVGPoint")
   {
     return ((x.x >= this.left) && (x.x <= this.right) && (x.y >= this.top) && (x.y <= this.bottom))
@@ -175,6 +175,6 @@ SVGRect.prototype.overlaps = function(box)
 {
   if (box.constructor.name == "SVGRect") // check to make sure we have passed an SVGRect
   {
-    return !((box.left > this.right) || (box.right < this.left) || (box.top < this.bottom) || (box.bottom > this.top));
+    return !((box.left > this.right) || (box.right < this.left) || (box.top > this.bottom) || (box.bottom < this.top));
   }
 }
