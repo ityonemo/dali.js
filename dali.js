@@ -15,31 +15,31 @@ var dali =
     //set the important svg properties.
     $(svgobject).attr("version", "1.1");
     $(svgobject).css("overflow-x","hidden").css("overflow-y","hidden").css("position","relative");
+
+    //create a set of attribute accessors to dynamically change width and height.
+    svgobject.__defineGetter__("width",function(){return svgobject._width;});
+    svgobject.__defineSetter__("width",function(val){$(svgobject).attr("width",val); return svgobject._width;});
+    svgobject.__defineGetter__("height",function(){return svgobject._height;});
+    svgobject.__defineSetter__("height",function(val){$(svgobject).attr("height",val); return svgobject._height;});
   
     //set the width and height, if applicable.
     if (!(isNaN(_width) || isNaN(_height)))
-      $(svgobject).attr("width", _width).attr("height", _height);
-    else if (width)
-      $(svgobject).attr("id",_width); //let's guess that the _width variable contains the name.
+    {
+      svgobject.width = _width;
+      svgobject.height = _height;
+    }
+    else
+    { 
+      svgobject.width = 0; svgobject.height = 0;
+      if (_width)
+        $(svgobject).attr("id",_width); //let's guess that the _width variable contains the name.
+    }
 
     //set the name, if applicable.
     if (id)
     {
       $(svgobject).attr("id", id);
     }
-
-    $.extend(svgobject,
-    {
-      width: _width,
-      height: _height,
-      resize: function(__width, __height) //use double underscore to disambiguate from the passed params in outer function.
-      { //set our variables.
-        this.width = __width; this.height = __height; 
-        //set our attributes in the DOM.
-        $(this).attr("width", __width).attr("height", __height);
-        return this;
-      },
-    });
 
     //use jQuery to cleanly extend the SVG dom object.
     $.extend(svgobject, dali.creatorextensions)
@@ -143,6 +143,11 @@ var dali =
   //common methods to all graphical objects.
   graphicsextensions:
   {
+    remove: function()
+    {
+      var parent = this.parentNode;
+      parent.removeChild(this);
+    }
   },
 };
 
