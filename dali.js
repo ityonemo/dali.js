@@ -17,10 +17,12 @@ var dali =
     $(svgobject).css("overflow-x","hidden").css("overflow-y","hidden").css("position","relative");
 
     //create a set of attribute accessors to dynamically change width and height.
+    delete svgobject.width;
+    delete svgobject.height;
     svgobject.__defineGetter__("width",function(){return svgobject._width;});
-    svgobject.__defineSetter__("width",function(val){$(svgobject).attr("width",val); return svgobject._width;});
+    svgobject.__defineSetter__("width",function(val){$(svgobject).attr("width",val); return svgobject._width = val;});
     svgobject.__defineGetter__("height",function(){return svgobject._height;});
-    svgobject.__defineSetter__("height",function(val){$(svgobject).attr("height",val); return svgobject._height;});
+    svgobject.__defineSetter__("height",function(val){$(svgobject).attr("height",val); return svgobject._height = val;});
   
     //set the width and height, if applicable.
     if (!(isNaN(_width) || isNaN(_height)))
@@ -106,7 +108,7 @@ var dali =
       var textobject = dali.create("text", this);
       textobject.__setaccessors__("x", x);
       textobject.__setaccessors__("y", y);
-      textobject.__setaccessors__("text", text);
+      textobject.textContent = text;
       return textobject;
     },
 
@@ -124,7 +126,6 @@ var dali =
   create: function (tag, dom)
   {
     var newobject = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    delete newobject.transform;
     $.extend(newobject, dali.graphicsextensions); // extend with all of our graphics extensions functions.
     dom.appendChild(newobject);
 
@@ -150,9 +151,10 @@ var dali =
       parent.removeChild(this);
     },
 
-    transform: function(transformation, clobber)
+    applytransform: function(transformation, clobber)  //have to rename this otherwise firefox chokes.
     {
-      var current = (clobber) ? "" : $(this).attr("transform");
+      var oldtransform = $(this).attr("transform");
+      var current = (clobber) ? "" : (oldtransform ? oldtransform : "");
       $(this).attr("transform", transformation.toString() + current);
     }
   },
@@ -187,7 +189,7 @@ SVGRect.prototype.__defineGetter__("top",function(){return this.y});
 SVGRect.prototype.__defineSetter__("right",function(val){if(val > this.x) this.width = val - this.x});
 SVGRect.prototype.__defineGetter__("right",function(){return this.x + this.width});
 SVGRect.prototype.__defineSetter__("bottom",function(val){if (val > this.y) this.height = val - this.y});
-SVGRect.prototype.__defineGetter__("bottom",function(){return this.y + this.width});
+SVGRect.prototype.__defineGetter__("bottom",function(){return this.y + this.height});
 
 SVGRect.prototype.contains = function(x, y)
 {
