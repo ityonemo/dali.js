@@ -74,11 +74,6 @@ var dali =
       return rect;
     };
 
-    dali.matrix = function()
-    { //creates a ((1,0,0)(0,1,0)) identity matrix
-      return svgobject.createSVGMatrix();
-    }
-
     return svgobject;
   },
 
@@ -199,7 +194,6 @@ var dali =
   {
     initialize: function()
     {
-      this.realmatrix = dali.matrix();
     },
 
     remove: function()
@@ -213,7 +207,6 @@ var dali =
       var oldtransform = $(this).attr("transform");
       var current = (clobber) ? "" : (oldtransform ? oldtransform : "");
       $(this).attr("transform", transformation.toString() + current);
-      this.realmatrix = (clobber) ? transformation.matrix : this.realmatrix.multiply(transformation.matrix);
     },
 
     realmatrix: {},
@@ -232,25 +225,26 @@ var dali =
   Translate: function(x, y)
   {
     this.toString = function(){return "translate(" + x + "," + y + ")";};
-    this.matrix = dali.matrix().translate(x, y);
   },
 
   Scale: function(x, y)
   {
     this.toString = (y) ? function(){return "scale(" + x + "," + y + ")";} : function(){return "scale(" + x + ")";}
-    this.matrix = dali.matrix().scaleNonUniform(x, (y) ? y : x);
   },
 
   Rotation: function(t, x, y)
   {
     this.toString = (x && y) ? function(){return "rotate(" + t + "," + x + "," + y + ")";} : function(){ return "rotate(" + t + ")";}
-    this.matrix = dali.matrix().translate(x,y).rotate(t).translate(-x,-y);
   },
 
   Skew: function(t, direction)
   {
     this.toString = function(){return "skew" + ((direction == "Y") || (direction == "y") ? "Y" : "X") + "(" + t + ")";}
-    this.matrix = (direction == "Y") ? dali.matrix().skewY(t) : dali.matrix().skewX(t);
+  }
+  
+  Matrix: function(array)
+  {
+    this.toString = function(){return "matrix(" + array.join(" ") + ")"}
   }
 
   //MAKE FLIP AND CUSTOM MATRICES.
