@@ -26,13 +26,14 @@ e = g.ellipse(cx, cy, rx, ry);
 //you can access and modify attributes without using jQuery's $().attr
 e.cx = newx;
 e.cy = newy;
-e.r = newr;
+e.rx = newr;
 
 //NB: you cannot access css attributes in this fashion.
 
 //use jQuery to do flashy things.
 $(e).animate({cx:newpos}, time);
 $(e).animate({opacity:newval}, time);
+$(e).animate({rotate:10}, time);
 $(e).mousedown(function(event){alert("hi mom!");};
 
 //delete objects by using standard dom stuff.

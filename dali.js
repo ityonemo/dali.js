@@ -247,7 +247,7 @@ var dali =
       var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
       var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
 
-      $(this).attr("transform", rotate + translate + scale + (this.currenttransform ? this.currenttransform.toString() : ""));
+      $(this).attr("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
     },
   },
 
@@ -266,7 +266,7 @@ var dali =
   rotate: function(t, x, y)
   {
     if (dali.instance)
-      return dali.instance.createSVGMatrix().translate(t, x, y);
+      return dali.instance.createSVGMatrix().rotate(t, (x?x:0), (y?y:0));
   },
 
   skew: function(t, direction)
