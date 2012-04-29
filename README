@@ -42,8 +42,15 @@ surface.removeChild(g);
 
 //transformations.  Use dali.XXXX where XXXX is the transformation.
 
-e.transform(new dali.Translate(dx,dy));
+e.applytransform(dali.translate(dx,dy));
 
-//TODO
-// complex path management
+//you can alternatively use the following transformations directly:
+//applied transformations are cumulative, direct transformations
+//will bash previous direct transforms
 
+e.scale = scale;
+e.rotate = rotation;
+e.dx = dx;
+e.dy = dy;
+
+//transformations are performed in the order of: scale, rotate, translate, applied
