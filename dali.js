@@ -240,7 +240,7 @@ var dali =
   Skew: function(t, direction)
   {
     this.toString = function(){return "skew" + ((direction == "Y") || (direction == "y") ? "Y" : "X") + "(" + t + ")";}
-  }
+  },
   
   Matrix: function(array)
   {
