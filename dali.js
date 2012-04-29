@@ -7,7 +7,8 @@
 
 var dali = 
 {
-  //creates and returns an SVG DOM object.
+  //creates and returns an SVG DOM object.  Places it in "instance".
+  instance: undefined,
   SVG: function(parent, _width, _height, id)
   {
     //create the object in the DOM.
@@ -73,6 +74,8 @@ var dali =
       rect.width = width; rect.height = height;
       return rect;
     };
+
+    dali.instance = svgobject;
 
     return svgobject;
   },
@@ -165,8 +168,8 @@ var dali =
   {
     var newobject = document.createElementNS("http://www.w3.org/2000/svg", tag);
     $.extend(newobject, dali.graphicsextensions); // extend with all of our graphics extensions functions.
-    newobject.initialize();
     newobject.svgparent = dom.svgparent;
+    newobject.initialize();
 
     dom.appendChild(newobject);
 
@@ -194,6 +197,21 @@ var dali =
   {
     initialize: function()
     {
+      this.currenttransform = dali.instance.createSVGMatrix();
+
+      this._dx = 0;
+      this._dy = 0;
+      this._rotate = 0;
+      this._scale = 1;
+      this.__defineSetter__("rotate",function(val){this._rotate = val; this.checktransforms()});
+      this.__defineSetter__("dx", function(val){this._dx = val; this.checktransforms()});
+      this.__defineSetter__("dy", function(val){this._dy = val; this.checktransforms()});
+      this.__defineSetter__("scale", function(val){this._scale = val; this.checktransforms()});
+      this.__defineGetter__("rotate",function(){return this._rotate});
+      this.__defineGetter__("dx", function(){return this._dx});
+      this.__defineGetter__("dy", function(){return this._dy});
+      this.__defineGetter__("scale", function(){return this.scale});
+      _accessortransforms = true;
     },
 
     remove: function()
@@ -202,14 +220,16 @@ var dali =
       parent.removeChild(this);
     },
 
+    currenttransform: undefined,
+
     applytransform: function(transformation, clobber)  //have to rename this otherwise firefox chokes.
     {
-      var oldtransform = $(this).attr("transform");
-      var current = (clobber) ? "" : (oldtransform ? oldtransform : "");
-      $(this).attr("transform", transformation.toString() + current);
+      if (!this.currenttransform || clobber)
+        this.currenttransform = dali.instance.createSVGMatrix();
+      this.currenttransform = this.currenttransform.multiply(transformation);
+      $(this).attr("transform", this.currenttransform.toString());
     },
 
-    realmatrix: {},
     svgparent: {},
 
     realBBox: function()
@@ -219,35 +239,48 @@ var dali =
       var thisbox = this.getBoundingClientRect();
       var parbox = this.svgparent.getBoundingClientRect();
       return dali.rrect(thisbox.left - parbox.left + this.svgparent.scrollLeft, thisbox.top - parbox.top + this.svgparent.scrollTop, thisbox.width, thisbox.height);
-    }
+    },
+
+    checktransforms: function()
+    {
+      var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
+      var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
+      var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
+
+      $(this).attr("transform", rotate + translate + scale + (this.currenttransform ? this.currenttransform.toString() : ""));
+    },
   },
 
-  Translate: function(x, y)
+  translate: function(x, y)
   {
-    this.toString = function(){return "translate(" + x + "," + y + ")";};
+    if (dali.instance)
+      return dali.instance.createSVGMatrix().translate(x, y);
   },
 
-  Scale: function(x, y)
+  scale: function(x, y)
   {
-    this.toString = (y) ? function(){return "scale(" + x + "," + y + ")";} : function(){return "scale(" + x + ")";}
+    if (dali.instance)
+      return dali.instance.createSVGMatrix().scale(x, y);
   },
 
-  Rotation: function(t, x, y)
+  rotate: function(t, x, y)
   {
-    this.toString = (x && y) ? function(){return "rotate(" + t + "," + x + "," + y + ")";} : function(){ return "rotate(" + t + ")";}
+    if (dali.instance)
+      return dali.instance.createSVGMatrix().translate(t, x, y);
   },
 
-  Skew: function(t, direction)
+  skew: function(t, direction)
+  //direction must be "X" or "Y".
   {
-    this.toString = function(){return "skew" + ((direction == "Y") || (direction == "y") ? "Y" : "X") + "(" + t + ")";}
+    if (dali.instance)
+      return dali.instance.createSVGMatrix()["skew" + direction](x, y);
   },
   
-  Matrix: function(array)
+  flip: function(direction)
   {
-    this.toString = function(){return "matrix(" + array.join(" ") + ")"}
-  }
-
-  //MAKE FLIP AND CUSTOM MATRICES.
+    if (dali.instance)
+      return dali.instance.createSVGMatrix()["flip" + direction]();
+  },
 };
 
 //add a few utility functions to the svgrect prototype
@@ -288,4 +321,9 @@ SVGRect.prototype.overlaps = function(box)
              (box.top > this.bottom) || 
              (box.bottom < this.top));
   }
+}
+
+SVGMatrix.prototype.toString = function()
+{
+  return "matrix(" + this.a + " " + this.b + " " + this.c + " " + this.d + " " + this.e + " " + this.f + ")";
 }
