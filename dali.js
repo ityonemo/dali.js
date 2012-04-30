@@ -7,6 +7,12 @@
 
 var dali = 
 {
+  settings: //dali settings.
+  {
+    dragradius:2,
+  },
+  dragging: false,
+
   //creates and returns an SVG DOM object.  Places it in "instance".
   instance: undefined,
   SVG: function(parent, _width, _height, id)
@@ -178,6 +184,8 @@ var dali =
     newobject.__defineGetter__("right", function(){return newobject.realBBox().right;});
     newobject.__defineGetter__("top", function(){return newobject.realBBox().top;});
     newobject.__defineGetter__("bottom", function(){return newobject.realBBox().bottom;});
+    newobject.__defineGetter__("width", function(){return newobject.getBBox().width;});
+    newobject.__defineGetter__("height", function(){return newobject.getBBox().height;});
 
     //create a specialized dynamic attribute accessor function.
     //this function lets us take a localized variable and mirror it to set attributes to the SVG as if it were
@@ -249,6 +257,69 @@ var dali =
 
       $(this).attr("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
     },
+
+    ondragend: undefined,
+    ondragmove: undefined,
+    ondragstart: undefined,
+
+    setdrag: function(ondragend, ondragmove, ondragstart)
+    //assigns callback functions to the object being dragged.
+    //note the order.
+    {
+      this.ondragend = ondragend;
+      this.ondragmove = ondragmove;
+      this.ondragstart = ondragstart;
+
+      this.addEventListener("mousedown", this.registerdrag);
+    },
+
+    registerdrag: function(event)
+      //register drag.
+    {
+      //start listening to window.
+      dali.dragobject = this;
+      dali.dragoriginX = event.clientX;
+      dali.dragoriginY = event.clientY;
+      window.addEventListener("mousemove", dali.dragobject.dragmove);
+      window.addEventListener("mouseup", dali.dragobject.dragup);
+    },
+
+    dragmove: function(event)
+    {
+      //convenience math
+      event.dx = event.clientX - dali.dragoriginX;
+      event.dy = event.clientY - dali.dragoriginY;
+      //check to see if we are dragging.
+
+      if (!dali.dragging)
+      {
+        if (Math.abs(event.dx) + Math.abs(event.dy) > dali.settings.dragradius)
+        {
+          dali.dragging = true;
+          if (dali.dragobject.ondragstart)
+            dali.dragobject.ondragstart(event);
+        }
+      } else
+      {
+        var sp = dali.dragobject.svgparent;
+        var box = sp.getBoundingClientRect();
+        if (dali.dragobject.ondragmove)
+        dali.dragobject.ondragmove(event.clientX - box.left + sp.scrollLeft, event.clientY - box.top + sp.scrollTop, event);
+      }
+    },
+
+    dragup: function(event)
+    {
+      if (dali.dragging)
+      { //unregister event listeners
+        if (dali.dragobject.ondragend)
+          dali.dragobject.ondragend(event);
+        dali.dragging = false;
+        window.removeEventListener("mousemove", dali.dragobject.dragmove);
+        window.removeEventListener("mouseup", dali.dragobject.dragup);
+        dali.dragobject = undefined;
+      }
+    },
   },
 
   translate: function(x, y)
@@ -314,13 +385,10 @@ SVGRect.prototype.contains = function(x, y)
 
 SVGRect.prototype.overlaps = function(box)
 {
-  if (box instanceof SVGRect) // check to make sure we have passed an SVGRect
-  {
-    return !((box.left > this.right) || 
-             (box.right < this.left) || 
-             (box.top > this.bottom) || 
-             (box.bottom < this.top));
-  }
+  return !((box.left > this.right) || 
+           (box.right < this.left) || 
+           (box.top > this.bottom) || 
+           (box.bottom < this.top));
 }
 
 SVGMatrix.prototype.toString = function()

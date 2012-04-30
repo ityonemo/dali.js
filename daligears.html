@@ -6,6 +6,9 @@
     <script src="jquery.js" type="text/javascript"></script>
     <script src="daligears.js" type="text/javascript"></script>
     <script type="text/javascript">
+
+      opacityarray = [1, 0.8, 0.6, 0.4, 0.2];
+
       document.addEventListener("DOMContentLoaded",
       function()
       {
@@ -14,6 +17,10 @@
         g1 = daligear(10,100,120,10);
         g2 = daligear(10,200,220,20);
         g3 = daligear(10,50,70,5);
+
+        g1.opacityindex = 0;
+        g2.opacityindex = 0;
+        g3.opacityindex = 0;
  
         g1.sign = 1;
         g1.applytransform(dali.translate(150,150));
@@ -29,6 +36,10 @@
         g1.move();
         g2.move();
         g3.move();
+
+        g1.onclick = function(){g1.opacityindex++; $(g1).css("opacity",opacityarray[g1.opacityindex % 5]);};
+        g2.onclick = function(){g2.opacityindex++; $(g2).css("opacity",opacityarray[g2.opacityindex % 5]);};
+        g3.onclick = function(){g3.opacityindex++; $(g3).css("opacity",opacityarray[g3.opacityindex % 5]);};
 
       });
     </script>
