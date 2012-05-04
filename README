@@ -1,19 +1,23 @@
 //dali.js
 //A SIMPLE SVG framework.
-//instead of abstracting the SVG DOM, just add attributes/accessors to the DOM objects.
-//REQUIRES jQUERY.
+//the dali philosophy: instead of abstracting the SVG DOM, just add attributes/accessors to the DOM objects.
+//REQUIRES jQUERY.  mostly because I'm too lazy to write my own $.extend, but occsionally DOM queries are used.
+//I could probably make it faster by not using jQuery dom queries.  Let me know if the performance hit is a problem.
+//dali.js is validated in google chrome, and occasionally in firefox.
+//dali.js is not jsMinn'ed.  I don't have a problem with jsMin, but if you want to do it, do it yourself.
+
 //How to use:
 
 surface = new dali.SVG(parentdomobject, width, height);
 
-//just use obviously-named methods to create new primitives.
+//just use obviously-named methods to create new SVG primitives.
 surface.circle(cx, cy, r);
 surface.ellipse(cx, cy, rx, ry);
 p = surface.path(pathtext);
 surface.rect(x, y, width, height, r);
 t = surface.text(x, y, text);
 
-//format primitives by using jQuery css.
+//format primitives by using jQuery css.  You can also use stylesheets, which is the smarter (TM) thing to do.
 $(p).css("stroke","#000000");
 $(p).css("fill","#RR0000");
 
@@ -42,8 +46,15 @@ surface.removeChild(g);
 
 //transformations.  Use dali.XXXX where XXXX is the transformation.
 
-e.transform(new dali.Translate(dx,dy));
+e.applytransform(dali.translate(dx,dy));
 
-//TODO
-// complex path management
+//you can alternatively use the following transformations directly:
+//applied transformations are cumulative, direct transformations
+//will bash previous direct transforms
 
+e.scale = scale;
+e.rotate = rotation;
+e.dx = dx;
+e.dy = dy;
+
+//transformations are performed in the order of: scale, rotate, translate, applied
