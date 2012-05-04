@@ -11,15 +11,18 @@ document.onready = function ()
   daliroids = dali.SVG(document.body, width, height, "daliroids");
   laplace.initialize();
 
-  transfield = daliroids.group("centered");
+  laplace.posttimestep.push(function()
+  { 
+    daliroids.setAttribute("viewBox", " " + (p.position.x - width/2) + " " + (p.position.y + -height/2) + " " + width + " " + height);
+  });
+
   spacedebris.initialize();
 
-  transfield.applytransform(dali.translate(width/2, height/2));
-  p = transfield.path("M 20 0 L -10 10 L -5 0 L -10 -10 z");
+  p = daliroids.path("M 20 0 L -10 10 L -5 0 L -10 -10 z");
   $(p).attr("id","ship");
   laplace.objectify(p);
   p.timestep = function(){
-    p.applytransform(laplace.matrixfor(p.orientation), true);
+    p.applytransform(dali.translate(p.position.x,p.position.y).multiply(laplace.matrixfor(p.orientation)), true);
   }
 
   window.addEventListener("keydown", blah);
@@ -32,7 +35,7 @@ spacedebris = {
 
   initialize: function()
   {
-    debrisfield = transfield.group("debris");
+    debrisfield = daliroids.group("debris");
     for (var i = 0; i < 20; i++)
     {
       var chunk = debrisfield.rect(-2,-1.5,4,3);
@@ -60,12 +63,6 @@ spacedebris = {
   }
 }
 
-
-
-
-
-
-
 /////////////////////////////
 //KEY STUFF
 
@@ -83,6 +80,10 @@ blah = function(event)
     break;
     case KEYRT:
       p.omega += 1;
+    break;
+    case KEYDN:
+      p.velocity.x += Math.cos(p.orientation * Math.PI / 180);
+      p.velocity.y += Math.sin(p.orientation * Math.PI / 180);
     break;
   }
 }

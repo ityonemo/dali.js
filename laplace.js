@@ -29,6 +29,11 @@ laplace = new function laPlace()
       laplace.o = dali.point(0,0);
     },
  
+    //important time-based functions.
+    pretimestep: [],
+    posttimestep: [],
+    postobject: [],
+
     //the physics list.
     objects: [],
     frequency: 100,    //how frequently we do a timestep.
@@ -37,13 +42,22 @@ laplace = new function laPlace()
 
     physics: function()
     {
+      for (var i = 0; i < laplace.pretimestep.length; i++)
+        pretimestep[i]();
+
       for (var i = 0; i < laplace.objects.length; i++)
       {
         var target = laplace.objects[i];
         target.position.add(target.velocity.times(laplace.timestep));
         target.orientation += target.omega * laplace.timestep;
         if (target.timestep) target.timestep();
+        for (var j = 0; j < laplace.postobject.length; j++)
+          laplace.postobject[j](object);
       }
+
+      for (var i = 0; i < laplace.posttimestep.length; i++)
+        laplace.posttimestep[i]();
+
       if (!laplace._halt)
         setTimeout(laplace.physics,100);
       else
