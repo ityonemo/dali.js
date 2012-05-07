@@ -27,9 +27,9 @@ var dali =
     delete svgobject.width;
     delete svgobject.height;
     svgobject.__defineGetter__("width",function(){return svgobject._width;});
-    svgobject.__defineSetter__("width",function(val){$(svgobject).attr("width",val); return svgobject._width = val;});
+    svgobject.__defineSetter__("width",function(val){svgobject.setAttribute("width",val); return svgobject._width = val;});
     svgobject.__defineGetter__("height",function(){return svgobject._height;});
-    svgobject.__defineSetter__("height",function(val){$(svgobject).attr("height",val); return svgobject._height = val;});
+    svgobject.__defineSetter__("height",function(val){svgobject.setAttribute("height",val); return svgobject._height = val;});
   
     //set the width and height, if applicable.
     if (!(isNaN(_width) || isNaN(_height)))
@@ -93,8 +93,8 @@ var dali =
     path: function(pathtext)
     {
       var pathobject = dali.create("path", this);
+      if (!pathtext) pathtext = "M 0 0"
       pathobject.__setaccessors__("d", pathtext);
-
       return pathobject;
     },
     
@@ -193,7 +193,7 @@ var dali =
     newobject.__setaccessors__ = function(_name, _init)
     {
       newobject.__defineGetter__(_name, function(){return newobject["_" + _name];});
-      newobject.__defineSetter__(_name, function(val){$(newobject).attr(_name, val); return newobject["_" + _name] = val;});
+      newobject.__defineSetter__(_name, function(val){newobject.setAttribute(_name, val); return newobject["_" + _name] = val;});
       newobject[_name] = _init;
     }
 
