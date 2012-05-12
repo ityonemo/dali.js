@@ -43,6 +43,9 @@ $(e).mousedown(function(event){alert("hi mom!");};
 //delete objects by using standard dom stuff.
 g.removeChild(e);
 surface.removeChild(g);
+//or, use the remove shortcut:
+e.remove(); // === e.parentNode.remove(e);
+
 
 //transformations.  Use dali.XXXX where XXXX is the transformation.
 
