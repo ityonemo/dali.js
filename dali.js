@@ -5,354 +5,365 @@
 // supplying either jQuery.js or an equivalent framework to support the
 // jQuery functions used by svg.js.
 
-var dali = 
+var dali = new function Dali()
 {
-  settings: //dali settings.
+  this.settings =  //dali settings
   {
     dragradius:2,
-  },
-  dragging: false,
+  }
 
-  //creates and returns an SVG DOM object.  Places it in "instance".
-  instance: undefined,
-  SVG: function(parent, _width, _height, id)
+  this.dragging = false; //stores the "dragging" state.
+  this.instances = undefined; //keeps instances of the SVG DOM object; key for doing math-ey stuff.
+
+  this.SVG = function(parent, width, height, id, cl)
   {
+    //input error checking:
+    width = parseInt(width);
+    height = parseInt(height);
+    if (isNaN(width) || isNaN(height))
+      throw new Error("width and height must be integer values");
+
     //create the object in the DOM.
     var svgobject = document.createElementNS("http://www.w3.org/2000/svg","svg");
     //set the important svg properties.
-    $(svgobject).attr("version", "1.1");
-    $(svgobject).css("overflow-x","hidden").css("overflow-y","hidden").css("position","relative");
+    svgobject.setAttribute("version", "1.1");
+    svgobject.setAttribute("style","overflow-x: hidden; overflow-y: hidden; position:relative");
 
-    //create a set of attribute accessors to dynamically change width and height.
+    //modify basic attributes of the svg element.
     delete svgobject.width;
     delete svgobject.height;
-    svgobject.__defineGetter__("width",function(){return svgobject._width;});
-    svgobject.__defineSetter__("width",function(val){svgobject.setAttribute("width",val); return svgobject._width = val;});
-    svgobject.__defineGetter__("height",function(){return svgobject._height;});
-    svgobject.__defineSetter__("height",function(val){svgobject.setAttribute("height",val); return svgobject._height = val;});
-  
-    //set the width and height, if applicable.
-    if (!(isNaN(_width) || isNaN(_height)))
-    {
-      svgobject.width = _width;
-      svgobject.height = _height;
-    }
-    else
-    { 
-      svgobject.width = 0; svgobject.height = 0;
-      if (_width)
-        $(svgobject).attr("id",_width); //let's guess that the _width variable contains the name.
-    }
+    //setters and getter for height and width; use the passed variables as private variables.
+    svgobject.__defineGetter__("width", function(){return width});
+    svgobject.__defineSetter__("width", function(val){svgobject.setAttribute("width", val); return width = val;});
+    svgobject.__defineGetter__("height", function(){return height});
+    svgobject.__defineSetter__("height", function(val){svgobject.setAttribute("height", val); return height = val;});
 
-    //set the name, if applicable.
-    if (id)
-    {
-      $(svgobject).attr("id", id);
-    }
+    //set the width and height
+    svgobject.width = width;
+    svgobject.height = height;
 
-    //use jQuery to cleanly extend the SVG dom object.
-    $.extend(svgobject, dali.creatorextensions)
+    //brand the object with the id and class.
+    if (id) svgobject.setAttribute("id",id);
+    if (cl) svgobject.setAttribute("class", cl)
 
-    //attach it to the parent.
-    parent.appendChild(svgobject)
-    svgobject.svgparent = parent;
- 
-    //create special "point", "rect", and "matrix" functions for dali which make constructing points and rects much easier.
-    dali.point = function(x, y)
-    {
-      var point = svgobject.createSVGPoint();
-      point.x = x; point.y = y;
-      return point;
-    };
+    //add the svg object to the parent
+    parent.appendChild(svgobject);
 
-    dali.rect = function(left, top, right, bottom)
-    {
-      var rect = svgobject.createSVGRect();
-      rect.left = left; rect.top = top;
-      rect.right = right; rect.bottom = bottom;
-      return rect;
-    };
+    //record the parent object
+    this.svgparent = parent;
 
-    dali.rrect = function(left, top, width, height) //relative rect
-    {
-      var rect = svgobject.createSVGRect();
-      rect.left = left; rect.top = top;
-      rect.width = width; rect.height = height;
-      return rect;
-    };
-
+    //store the svg object in dali.instances
     dali.instance = svgobject;
 
+    //return value
     return svgobject;
-  },
+  };
 
-  //dali creator object domains.
-  creatorextensions:
-  {
-    //dali graphical objects:
-    path: function(pathtext)
-    {
-      var pathobject = dali.create("path", this);
-      if (!pathtext) pathtext = "M 0 0"
-      pathobject.__setaccessors__("d", pathtext);
-      return pathobject;
-    },
-    
-    circle: function(x, y, rx, ry)  //bifunctional circle/ellipse function.
-    {
-      var circleobject = dali.create((ry == undefined) ? "circle" : "ellipse", this);
-      circleobject.__setaccessors__("cx", x);
-      circleobject.__setaccessors__("cy", y);
-
-      if (ry == undefined) // then we've made a circle.
-        circleobject.__setaccessors__("r", rx);
-      else //otherwise it's an ellipse.
-      {
-        circleobject.__setaccessors__("rx", rx);
-        circleobject.__setaccessors__("ry", ry);
-      }
-
-      return circleobject;
-    },
-
-    ellipse: this.circle,
-
-    image: function(src, x, y, width, height)
-    {
-      var imageobject = dali.create("image", this);
-      imageobject.__setaccessors__("src", src);
-      imageobject.__setaccessors__("x", x);
-      imageobject.__setaccessors__("y", y);
-      imageobject.__setaccessors__("width", width);
-      imageobject.__setaccessors__("height", height);
-
-      return imageobject;
-    },
-
-    rect: function(x, y, width, height, r)
-    {
-      var rectobject = dali.create("rect", this);
-      rectobject.__setaccessors__("x", x);
-      rectobject.__setaccessors__("y", y);
-      rectobject.__setaccessors__("width", width);
-      rectobject.__setaccessors__("height", height);
-      rectobject.__setaccessors__("r", (r ? r : 0));
-
-      return rectobject;
-    },
-
-    text: function(x, y, text)
-    {
-      var textobject = dali.create("text", this);
-      textobject.__setaccessors__("x", x);
-      textobject.__setaccessors__("y", y);
-      textobject.textContent = text;
-
-      return textobject;
-    },
-
-    group: function(id)
-    {
-      var groupobject = dali.create("g", this);
-      $.extend(groupobject, dali.creatorextensions);
-      if (id)
-        $(groupobject).attr("id", id);
-
-      return groupobject;
-    },
-
-    clear: function()
-    //nukes all the stuff in this DOM object.
-    {
-      for (var j = this.childNodes.length - 1; j >= 0; j--)
-        this.removeChild(this.childNodes[j]);
-    },
-  },
-
-  //create svg object function
-  create: function (tag, dom)
+  //////////////////////////////////////////////////////////////////////////
+  // SVG object creation
+  this.create = function(tag, parent)
   {
     var newobject = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    $.extend(newobject, dali.graphicsextensions); // extend with all of our graphics extensions functions.
-    newobject.svgparent = dom.svgparent;
-    newobject.initialize();
+    newobject.svgparent = parent.svgparent; //pass the parent of the svg object down the line.
 
-    dom.appendChild(newobject);
+    //clear out predefined results for attributes.
+    if (newobject.brands)
+      for (var i = 0; i < newobject.brands.length; i++)
+        delete newobject[newobject.brands[i][0]];
 
-    //accessor easy access to key attributes:
-    newobject.__defineGetter__("left", function(){return newobject.realBBox().left;});
-    newobject.__defineGetter__("right", function(){return newobject.realBBox().right;});
-    newobject.__defineGetter__("top", function(){return newobject.realBBox().top;});
-    newobject.__defineGetter__("bottom", function(){return newobject.realBBox().bottom;});
-    newobject.__defineGetter__("width", function(){return newobject.getBBox().width;});
-    newobject.__defineGetter__("height", function(){return newobject.getBBox().height;});
-
-    //create a specialized dynamic attribute accessor function.
-    //this function lets us take a localized variable and mirror it to set attributes to the SVG as if it were
-    //an internal value.
-    newobject.__setaccessors__ = function(_name, _init)
-    {
-      newobject.__defineGetter__(_name, function(){return newobject["_" + _name];});
-      newobject.__defineSetter__(_name, function(val){newobject.setAttribute(_name, val); return newobject["_" + _name] = val;});
-      newobject[_name] = _init;
-    }
-
+    //add this to the parent.
+    parent.appendChild(newobject);
     return newobject;
-  },
+  };
 
-  //common methods to all graphical objects.
-  graphicsextensions:
+  //////////////////////////////////////////////////////////////////////////
+  // DALI MATH OBJECTS
+ 
+  //create special "point", "rect", and "matrix" functions for dali which make constructing points and rects much easier.
+  this.point = function(x, y)
   {
-    initialize: function()
-    {
-      this.currenttransform = dali.instance.createSVGMatrix();
+    if (!dali.instance)
+      throw new Error("can't make dali objects without an SVG element.");
 
-      this._dx = 0;
-      this._dy = 0;
-      this._rotate = 0;
-      this._scale = 1;
-      this.__defineSetter__("rotate",function(val){this._rotate = val; this.checktransforms()});
-      this.__defineSetter__("dx", function(val){this._dx = val; this.checktransforms()});
-      this.__defineSetter__("dy", function(val){this._dy = val; this.checktransforms()});
-      this.__defineSetter__("scale", function(val){this._scale = val; this.checktransforms()});
-      this.__defineGetter__("rotate",function(){return this._rotate});
-      this.__defineGetter__("dx", function(){return this._dx});
-      this.__defineGetter__("dy", function(){return this._dy});
-      this.__defineGetter__("scale", function(){return this.scale});
-      _accessortransforms = true;
-    },
+    var point = dali.instance.createSVGPoint();
+    point.x = x; point.y = y;
+    return point;
+  };
 
-    remove: function()
-    {
-      var parent = this.parentNode;
-      parent.removeChild(this);
-    },
-
-    currenttransform: undefined,
-
-    applytransform: function(transformation, clobber)  //have to rename this otherwise firefox chokes.
-    {
-      if (!this.currenttransform || clobber)
-        this.currenttransform = dali.instance.createSVGMatrix();
-      this.currenttransform = this.currenttransform.multiply(transformation);
-      $(this).attr("transform", this.currenttransform.toString());
-    },
-
-    svgparent: {},
-
-    realBBox: function()
-    //this is a hack to find the real bounding box after all transformations have been completed.
-    //correct function depends on no DOM elements being between the svg tag and the parent tag.
-    {
-      var thisbox = this.getBoundingClientRect();
-      var parbox = this.svgparent.getBoundingClientRect();
-      return dali.rrect(thisbox.left - parbox.left + this.svgparent.scrollLeft, thisbox.top - parbox.top + this.svgparent.scrollTop, thisbox.width, thisbox.height);
-    },
-
-    checktransforms: function()
-    {
-      var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
-      var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
-      var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
-
-      $(this).attr("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
-    },
-
-    ondragend: undefined,
-    ondragmove: undefined,
-    ondragstart: undefined,
-
-    setdrag: function(ondragend, ondragmove, ondragstart)
-    //assigns callback functions to the object being dragged.
-    //note the order.
-    {
-      this.ondragend = ondragend;
-      this.ondragmove = ondragmove;
-      this.ondragstart = ondragstart;
-
-      this.addEventListener("mousedown", this.registerdrag);
-    },
-
-    registerdrag: function(event)
-      //register drag.
-    {
-      //start listening to window.
-      dali.dragobject = this;
-      dali.dragoriginX = event.clientX;
-      dali.dragoriginY = event.clientY;
-      window.addEventListener("mousemove", dali.dragobject.dragmove);
-      window.addEventListener("mouseup", dali.dragobject.dragup);
-    },
-
-    dragmove: function(event)
-    {
-      //convenience math
-      event.dx = event.clientX - dali.dragoriginX;
-      event.dy = event.clientY - dali.dragoriginY;
-      //check to see if we are dragging.
-
-      if (!dali.dragging)
-      {
-        if (Math.abs(event.dx) + Math.abs(event.dy) > dali.settings.dragradius)
-        {
-          dali.dragging = true;
-          if (dali.dragobject.ondragstart)
-            dali.dragobject.ondragstart(event);
-        }
-      } else
-      {
-        var sp = dali.dragobject.svgparent;
-        var box = sp.getBoundingClientRect();
-        if (dali.dragobject.ondragmove)
-        dali.dragobject.ondragmove(event.clientX - box.left + sp.scrollLeft, event.clientY - box.top + sp.scrollTop, event);
-      }
-    },
-
-    dragup: function(event)
-    {
-      if (dali.dragging)
-      { //unregister event listeners
-        if (dali.dragobject.ondragend)
-          dali.dragobject.ondragend(event);
-        dali.dragging = false;
-        window.removeEventListener("mousemove", dali.dragobject.dragmove);
-        window.removeEventListener("mouseup", dali.dragobject.dragup);
-        dali.dragobject = undefined;
-      }
-    },
-  },
-
-  translate: function(x, y)
+  this.rect = function(left, top, right, bottom)
   {
-    if (dali.instance)
-      return dali.instance.createSVGMatrix().translate(x, y);
-  },
+    if (!dali.instance)
+      throw new Error("can't make dali objects without an SVG element.");
 
-  scale: function(x, y)
-  {
-    if (dali.instance)
-      return dali.instance.createSVGMatrix().scale(x, y);
-  },
+    var rect = dali.instance.createSVGRect();
+    rect.left = left; rect.top = top;
+    rect.right = right; rect.bottom = bottom;
+    return rect;
+  };
 
-  rotate: function(t, x, y)
+  this.rrect = function(left, top, width, height) //relative rect
   {
-    if (dali.instance)
-      return dali.instance.createSVGMatrix().rotate(t, (x?x:0), (y?y:0));
-  },
+    if (!dali.instance)
+      throw new Error("can't make dali objects without an SVG element.");
 
-  skew: function(t, direction)
-  //direction must be "X" or "Y".
+    var rect = dali.instance.createSVGRect();
+    rect.left = left; rect.top = top;
+    rect.width = width; rect.height = height;
+    return rect;
+  };
+
+  this.matrix = function() //matrix
   {
-    if (dali.instance)
-      return dali.instance.createSVGMatrix()["skew" + direction](x, y);
-  },
-  
-  flip: function(direction)
-  {
-    if (dali.instance)
-      return dali.instance.createSVGMatrix()["flip" + direction]();
-  },
+    if (!dali.instance)
+      throw new Error("can't make dali objects without an SVG element.");
+
+    var matrix = dali.instance.createSVGMatrix();
+
+    if (!arguments[0]) return matrix;
+
+    if (arguments[0] instanceof SVGMatrix)
+      return matrix.multiply(arguments[0]);
+
+    switch (arguments[0].toLowerCase())
+    {
+      case "translate":
+        matrix = matrix.translate(
+          isNaN(arguments[1]) ? 0: arguments[1],
+          isNaN(arguments[2]) ? 0: arguments[2])
+      break;
+      case "scale":
+        if (isNaN(arguments[1]))
+          throw new Error("must scale by at least one numerical value.");
+
+        if (isNaN(arguments[2]))
+          matrix = matrix.translate(arguments[1], arguments[1]);
+        else
+          matrix = matrix.translate(argments[1], arguments[2]);
+      break;
+      case "rotate":
+        if (isNaN(arguments[1]))
+          throw new Error("must rotate by at least one numerical value.");
+
+        matrix = matrix.rotate(arguments[1],
+          isNaN(arguments[2]) ? 0: arguments[2],
+          isNaN(arguments[3]) ? 0: arguments[3]);
+      break;
+      case "skew":
+        if (isNaN(arguments[2])) throw new Error("must skew by a numerical value.");
+        matrix = matrix["skew" + arguments[1].toUpperCase()](arguments[2])
+      break;
+      case "skewx":
+        if (isNaN(arguments[1])) throw new Error("must skew by a numerical value."); 
+        matrix = matrix.skewX(arguments[1]);
+      break;
+      case "skewy":
+        if (isNaN(arguments[1])) throw new Error("must skew by a numerical value."); 
+        matrix = matrix.skewY(arguments[1]);
+      break;
+      case "flip":
+        matrix = matrix["flip" + arguments[1].toUpperCase()]();
+      break;
+      case "flipx":
+        matrix = matrix.flipX();
+      break;
+      case "flipy":
+        matrix = matrix.flipY();
+      break;
+    }
+    return matrix;
+  };
 };
+
+//graphics extensions.
+dali.brandTransform = function(obj, transformation, val)
+//adds transformation members to an SVGobject's prototype.
+{
+  var proto = obj.prototype;
+  if (isNaN(val)) throw new Error("transformations must be numeric values.");
+  proto["_" + transformation] = val;
+  proto.__defineGetter__(transformation, function(){return this["_" + transformation];});
+  proto.__defineSetter__(transformation, 
+    function(x)
+    {
+      if (isNaN(x)) throw new Error("transformations must be numeric values.");
+      this["_" + transformation] = x; this.setsectransforms();
+    });
+};
+
+dali.brandAccessor = function(obj, name, val, nonnumeric)
+//modifies an SVGobject's prototype to allow for direct accessor modification.
+{
+  var proto = obj.prototype;
+  if (isNaN(val) && (!nonnumeric)) throw new Error("property " + name + " must be numeric.");
+  proto["_" + name] = val;
+  proto.__defineGetter__(name, function(){return this["_" + name];});
+  proto.__defineSetter__(name,
+    function(x)
+    {
+      if (isNaN(x) && (!nonnumeric)) throw new Error("property " + name + " must be numeric.");
+      this.setAttribute(name, x); 
+      return this["_" + name] = x;
+    });
+}
+
+dali.brandByArray = function(obj, arr)
+//make branding zippety fast
+{
+  for (var i = 0; i < arr.length; i++)
+    dali.brandAccessor(obj, arr[i][0], arr[i][1], arr[i][2]);
+  obj.prototype.brands = arr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Extensive modification of the SVG DOM object collection
+
+dali.brandTransform(SVGElement,"dx", 0);
+dali.brandTransform(SVGElement,"dy", 0);
+dali.brandTransform(SVGElement,"rotate", 0);
+dali.brandTransform(SVGElement,"scale", 1);
+dali.brandByArray(SVGPathElement,[["d","M 0 0", true]])
+dali.brandByArray(SVGCircleElement, [["cx", 0],["cy", 0],["r", 0]]);
+dali.brandByArray(SVGEllipseElement, [["cx", 0],["cy", 0],["rx", 0],["ry", 0]]);
+dali.brandByArray(SVGImageElement, [["x", 0],["y", 0],["width", 0],["height",0],["src", "", true]]);
+dali.brandByArray(SVGRectElement, [["x", 0],["y", 0],["width", 0],["height",0],["r",0]]);
+dali.brandByArray(SVGTextElement, [["x", 0],["y", 0]]);
+
+dali.makeCreator = function(obj, tag)
+{
+  obj.prototype[tag] = function(o)
+  {
+    var tgt = dali.create(tag, this);
+    if (o) tgt.transfer(o);
+    return tgt;
+  }
+}
+
+dali.makeCreatorsByArray = function(obj, arr)
+{
+  for (var i = 0; i < arr.length; i++)
+    dali.makeCreator(obj, arr[i]);
+}
+
+tagarray = ["g","path", "circle", "ellipse", "image", "rect", "text"];
+
+dali.makeCreatorsByArray(SVGGElement, tagarray);
+dali.makeCreatorsByArray(SVGSVGElement, tagarray);
+
+//create "clear" functionality for both the primary SVG element as well as the group element.
+SVGSVGElement.prototype.clear =
+SVGGElement.prototype.clear = function()
+{
+  for (var j = this.childNodes.length - 1; j >= 0; j--)
+    this.removeChild(this.childNodes[j]);
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// SVG textelement hack
+SVGTextElement.prototype.__defineGetter__("text", function(){return this.textContent;});
+SVGTextElement.prototype.__defineSetter__("text", function(v){return this.textContent = v;});
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// GENERAL EXTENSIONS TO ALL SVGElements:
+
+SVGElement.prototype.transfer = function(from)
+{
+  for (prop in from)
+    this[prop] = from[prop];
+};
+
+SVGElement.prototype.remove = function()
+{
+  this.parentNode.removeChild(this);
+}
+
+SVGElement.prototype.applytransform = function(transformation, clobber)
+{
+  if (!this.currenttransform || clobber)
+    this.currenttransform = dali.matrix();
+  this.currenttransform = this.currenttransform.multiply(transformation);
+  this.setAttribute("transform", this.currenttransform.toString());
+}
+
+//manipulate the secondary transforms:
+SVGElement.prototype.setsectransforms = function()
+{
+  var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
+  var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
+  var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
+
+  this.setAttribute("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
+},
+
+SVGElement.prototype.realBBox = function()
+//this is a hack to find the real bounding box after all transformations have been completed.
+{
+  var thisbox = this.getBoundingClientRect();
+  var parbox = this.svgparent.getBoundingClientRect();
+  return dali.rrect(thisbox.left - parbox.left + this.svgparent.scrollLeft, thisbox.top - parbox.top + this.svgparent.scrollTop, thisbox.width, thisbox.height);
+}
+
+SVGElement.prototype.__defineGetter__("left", function(){return this.realBBox().left;});
+SVGElement.prototype.__defineGetter__("right", function(){return this.realBBox().right;});
+SVGElement.prototype.__defineGetter__("top", function(){return this.realBBox().top;});
+SVGElement.prototype.__defineGetter__("bottom", function(){return this.realBBox().bottom;});
+SVGElement.prototype.__defineGetter__("width", function(){return this.realBBox().width;});
+SVGElement.prototype.__defineGetter__("height", function(){return this.realBBox().height;});
+
+////////////////////////////////////////////////////////////////////////////
+// DRAG/DROP FUNCTIONALITY
+
+SVGElement.prototype.setdrag = function(ondragend, ondragmove, ondragstart)
+{
+  this.ondragend = ondragend;
+  this.ondragmove = ondragmove;
+  this.ondragstart = ondragstart;
+
+  this.addEventListener("mousedown", this.registerdrag);
+}
+
+SVGElement.prototype.registerdrag = function(event)
+{
+  dali.dragobject = this;
+  dali.dragoriginX = event.clientX;
+  dali.dragoriginY = event.clientY;
+  window.addEventListener("mousemove", dali.dragobject.dragmove);
+  window.addEventLIstener("mouseup", dali.dragobject.dragup);
+}
+
+SVGElement.prototype.dragmove = function(event)
+{
+  event.dx = event.clientX - dali.dragoriginX;
+  event.dy = event.clientY - dali.dragoriginY;
+
+  if (!dali.dragging)
+  {
+    if (Math.abs(event.dx) + Math.abs(event.dy) > dali.settings.dragradius)
+    {
+      dali.dragging = true;
+      if (dali.dragobject.ondragstart)
+        dali.dragobject.ondragstart(event);
+    }
+  } else
+  {
+    var sp = dali.dragobject.svgparent;
+    var box = sp.getBoundingClientRect();
+    if (dali.dragobject.ondragmove)
+      dali.dragobject.ondragmove(event.clientX - box.left + sp.scrollLeft, event.clientY - box.top + sp.scrollTop, event);
+  }
+}
+
+SVGElement.prototype.dragup = function(event)
+{
+  if (dali.dragging)
+  { //unregister event listeners
+    if (dali.dragobject.ondragend)
+      dali.dragobject.ondragend(event);
+    dali.dragging = false;
+    window.removeEventListener("mousemove", dali.dragobject.dragmove);
+    window.removeEventListener("mouseup", dali.dragobject.dragup);
+    dali.dragobject = undefined;
+  }
+}
 
 //add a few utility functions to the svgrect prototype
 

@@ -6,9 +6,9 @@ geartime = 360;
 
 daligear = function(holeradius, innerradius,outerradius,teeth)
 {
-  gear = picture.group();
-  gear.circle(0,0,innerradius);
-  var hole = gear.circle(0,0,holeradius);
+  gear = picture.g();
+  gear.circle({cx: 0,cy: 0,r: innerradius});
+  var hole = gear.circle({cx:0, cy:0, r:holeradius});
   $(hole).attr("class","hole");
 
   var deltatheta = 360 / (teeth * 2);
@@ -25,9 +25,11 @@ daligear = function(holeradius, innerradius,outerradius,teeth)
 
   for (var i = 0; i < teeth; i++)
   {
-    var a = gear.path("M " + innerx1 + " " + innery1 + " L " + outerx1 + " " + outery1 + " A " + outerradius + " " + outerradius + 
-                      " " + deltatheta + " 0 1 " + outerx2 + " " + outery2 + " L " + innerx2 + " " + innery2 + "z");
-    a.applytransform(dali.rotate(deltatheta * i * 2));
+    var a = gear.path(
+      {d:
+      "M " + innerx1 + " " + innery1 + " L " + outerx1 + " " + outery1 + " A " + outerradius + " " + outerradius + 
+                      " " + deltatheta + " 0 1 " + outerx2 + " " + outery2 + " L " + innerx2 + " " + innery2 + "z"});
+    a.applytransform(dali.matrix("rotate",deltatheta * i * 2));
   }
 
   $.extend(gear,

@@ -8,14 +8,13 @@
 
 //How to use:
 
-surface = new dali.SVG(parentdomobject, width, height);
+surface = dali.SVG(parentdomobject, width, height);
 
 //just use obviously-named methods to create new SVG primitives.
-surface.circle(cx, cy, r);
-surface.ellipse(cx, cy, rx, ry);
+surface.circle({cx:0, cy:0, r:50});
 p = surface.path(pathtext);
-surface.rect(x, y, width, height, r);
-t = surface.text(x, y, text);
+surface.rect({x:0, y:0, width:50, height:50});
+t = surface.text({x:0, y:0});
 
 //format primitives by using jQuery css.  You can also use stylesheets, which is the smarter (TM) thing to do.
 $(p).css("stroke","#000000");
