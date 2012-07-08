@@ -8,24 +8,18 @@
 
 //How to use:
 
-surface = new dali.SVG(parentdomobject, width, height);
+surface = dali.SVG(parentdomobject, width, height);
 
 //just use obviously-named methods to create new SVG primitives.
-surface.circle(cx, cy, r);
-surface.ellipse(cx, cy, rx, ry);
+surface.circle({cx:0, cy:0, r:50});
 p = surface.path(pathtext);
-surface.rect(x, y, width, height, r);
-t = surface.text(x, y, text);
+surface.rect({x:0, y:0, width:50, height:50});
+t = surface.text({x:0, y:0});
+t.text = "hi mom"
 
 //format primitives by using jQuery css.  You can also use stylesheets, which is the smarter (TM) thing to do.
 $(p).css("stroke","#000000");
 $(p).css("fill","#RR0000");
-
-//create groups simply.
-g = surface.group();
-g.circle(cx, cy, r);
-e = g.ellipse(cx, cy, rx, ry);
-//etc
 
 //you can access and modify attributes without using jQuery's $().attr
 e.cx = newx;
@@ -40,22 +34,26 @@ $(e).animate({opacity:newval}, time);
 $(e).animate({rotate:10}, time);
 $(e).mousedown(function(event){alert("hi mom!");};
 
-//delete objects by using standard dom stuff.
-g.removeChild(e);
+//delete objects by using standard dom stuff. or shortucts
+e.remove();  // is the same as...  g.removeChild(e);
 surface.removeChild(g);
+<<<<<<< HEAD
 //or, use the remove shortcut:
 e.remove(); // === e.parentNode.remove(e);
 
+=======
+//or, shortcut!
+>>>>>>> newdali
 
 //transformations.  Use dali.XXXX where XXXX is the transformation.
 
-e.applytransform(dali.translate(dx,dy));
+e.applytransform(dali.matrix("translate", dx, dy));
 
 //you can alternatively use the following transformations directly:
 //applied transformations are cumulative, direct transformations
 //will bash previous direct transforms
 
-e.scale = scale;
+e.scale = scaling;
 e.rotate = rotation;
 e.dx = dx;
 e.dy = dy;
