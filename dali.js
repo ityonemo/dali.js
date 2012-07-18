@@ -365,7 +365,9 @@ SVGElement.prototype.dragup = function(event)
   }
 }
 
-//add a few utility functions to the svgrect prototype
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SVG MATH modifications
 
 SVGRect.prototype.__defineSetter__("left",function(val){this.x = val});
 SVGRect.prototype.__defineGetter__("left",function(){return this.x});
