@@ -70,7 +70,14 @@ e.dy = dy;
 Reference
 ---------
 
-dali (singleton of object _Dali_): main object encapsulating the library namespace.
+```
+dali 
+```
+(singleton of object _Dali_): main object encapsulating the library namespace.
 
-dali.SVG(parent, width, height, id, cl): create an <svg> tag in the DOM, imbue it with
+```javascript
+dali.SVG(parent, width, height, id, cl)
+```
+
+create an <svg> tag in the DOM, imbue it with
 _width_ and _height_ in the inline style, and it should have id _id_ and class _cl_.
