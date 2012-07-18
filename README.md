@@ -1,12 +1,18 @@
-//dali.js
-//A SIMPLE SVG framework.
-//the dali philosophy: instead of abstracting the SVG DOM, just add attributes/accessors to the DOM objects.
-//REQUIRES jQUERY.  mostly because I'm too lazy to write my own $.extend, but occsionally DOM queries are used.
-//I could probably make it faster by not using jQuery dom queries.  Let me know if the performance hit is a problem.
-//dali.js is validated in google chrome, and occasionally in firefox.
-//dali.js is not jsMinn'ed.  I don't have a problem with jsMin, but if you want to do it, do it yourself.
+dali.js
+=======
 
-//How to use:
+A SIMPLE SVG framework.
+-----------------------
+
+the dali philosophy: don't abstract the SVG DOM.  SVG is here to stay, let's use the power
+of Javascript to make SVG work.
+
+dali.js is validated in google chrome, and occasionally in firefox.
+
+dali.js is not jsMinn'ed.  I don't have a problem with jsMin, but if you want to do it, do it yourself.
+
+Using dali.js
+-------------
 
 surface = dali.SVG(parentdomobject, width, height);
 
@@ -59,3 +65,12 @@ e.dx = dx;
 e.dy = dy;
 
 //transformations are performed in the order of: scale, rotate, translate, applied
+
+
+Reference
+---------
+
+dali (singleton of object _Dali_): main object encapsulating the library namespace.
+
+dali.SVG(parent, width, height, id, cl): create an <svg> tag in the DOM, imbue it with
+_width_ and _height_ in the inline style, and it should have id _id_ and class _cl_.

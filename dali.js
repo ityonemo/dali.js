@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////
 // dali.js
-// - a framework for cleanly manipulating SVG using Javascript and jQuery.
+// - a framework for cleanly manipulating SVG using Javascript.
 // jQuery is required for this to work.  The developer is responsible for
 // supplying either jQuery.js or an equivalent framework to support the
 // jQuery functions used by svg.js.
