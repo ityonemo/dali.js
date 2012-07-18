@@ -75,9 +75,16 @@ dali
 ```
 (singleton of object _Dali_): main object encapsulating the library namespace.
 
-```javascript
+```
 dali.SVG(parent, width, height, id, cl)
 ```
-
-create an <svg> tag in the DOM, imbue it with
+create an `<svg>` tag in the DOM, imbue it with
 _width_ and _height_ in the inline style, and it should have id _id_ and class _cl_.
+
+
+```
+dali.create(parent, tag)
+```
+create a tag in the DOM attached to parent.  Also attaches "svgparent" member to this tag
+which corresponds to top level svg tag which contains this tag.  Usually this function
+will be automatically called.
