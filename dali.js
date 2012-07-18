@@ -281,13 +281,18 @@ SVGElement.prototype.applytransform = function(transformation, clobber)
   if (!this.currenttransform || clobber)
     this.currenttransform = dali.matrix();
   this.currenttransform = this.currenttransform.multiply(transformation);
+  this.brandtransform();
+},
 
+SVGElement.prototype.brandtransform = function()
+{
   var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
   var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
   var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
 
   this.setAttribute("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
-},
+}
+
 
 SVGElement.prototype.realBBox = function()
 //this is a hack to find the real bounding box after all transformations have been completed.

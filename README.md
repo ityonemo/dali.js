@@ -32,6 +32,27 @@ t = g.text({x:0, y:0});
 t.text = "hi mom";
 ```
 
+### shortcuts
+
+Dali implements useful shortcuts:
+
+attributes can be directly accessed without using jQuery's $().attr
+```
+c.cx = newx;
+c.cy = newy;
+c.rx = newr;
+```
+
+it's also possible to do some removing.
+```
+r.remove();  // is the same as...  g.removeChild(r);
+surface.removeChild(g);
+g.clear(); // removes all children
+surface.clear(); //nukes everything
+```
+
+### when to use jQuery (not included!)
+
 I suggest using jQuery to make formatting changes.  You can also use stylesheets, in the expected fashion.
 
 ```
@@ -39,27 +60,15 @@ $(p).css("stroke","#000000");
 $(p).css("fill","#RR0000");
 ```
 
-attributes can be directly accessed without using jQuery's $().attr
-
-```
-c.cx = newx;
-c.cy = newy;
-c.rx = newr;
-```
-
 I suggest using jQuery to do flashy things.
 ```
-$(c).animate({cx:newpos}, time);
+$(c).animate({cx:newpos}, time);  //yes this works even though it's not in a 'style' attribute!
 $(c).animate({opacity:newval}, time);
 $(c).animate({rotate:10}, time);
 $(c).mousedown(function(event){alert("hi mom!");};
 ```
 
-Dali implements useful shortcuts:
-```
-r.remove();  // is the same as...  g.removeChild(r);
-surface.removeChild(g);
-```
+### transformations
 
 ```
 t.applytransform(dali.matrix("translate", dx, dy));
@@ -80,6 +89,8 @@ again, jQuery can be used to do flashy things.
 ```
 $(t).animate({rotation})
 ```
+
+### drag/drop
 
 Code Reference
 --------------
