@@ -186,7 +186,7 @@ dali.brandTransform = function(obj, transformation, val)
     function(x)
     {
       if (isNaN(x)) throw new Error("transformations must be numeric values.");
-      this["_" + transformation] = x; this.setsectransforms();
+      this["_" + transformation] = x; this.applytransform();
     });
 };
 
@@ -281,12 +281,7 @@ SVGElement.prototype.applytransform = function(transformation, clobber)
   if (!this.currenttransform || clobber)
     this.currenttransform = dali.matrix();
   this.currenttransform = this.currenttransform.multiply(transformation);
-  this.setAttribute("transform", this.currenttransform.toString());
-}
 
-//manipulate the secondary transforms:
-SVGElement.prototype.setsectransforms = function()
-{
   var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
   var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
   var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";

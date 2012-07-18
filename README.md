@@ -14,61 +14,77 @@ dali.js is not jsMinn'ed.  I don't have a problem with jsMin, but if you want to
 Using dali.js
 -------------
 
+First create an svg environment:
+
+```
 surface = dali.SVG(parentdomobject, width, height);
+```
 
-//just use obviously-named methods to create new SVG primitives.
-surface.circle({cx:0, cy:0, r:50});
-p = surface.path(pathtext);
-surface.rect({x:0, y:0, width:50, height:50});
-t = surface.text({x:0, y:0});
-t.text = "hi mom"
+You may then begin to create appropriate primitives inside this environment.  Pass primitives a single object
+With the expected SVG attributes as a hash.
 
-//format primitives by using jQuery css.  You can also use stylesheets, which is the smarter (TM) thing to do.
+```
+c = surface.circle({cx:0, cy:0, r:50});
+p = surface.path({d:pathtext});
+g = surface.g();
+r = g.rect({x:0, y:0, width:50, height:50});
+t = g.text({x:0, y:0});
+t.text = "hi mom";
+```
+
+I suggest using jQuery to make formatting changes.  You can also use stylesheets, in the expected fashion.
+
+```
 $(p).css("stroke","#000000");
 $(p).css("fill","#RR0000");
+```
 
-//you can access and modify attributes without using jQuery's $().attr
-e.cx = newx;
-e.cy = newy;
-e.rx = newr;
+attributes can be directly accessed without using jQuery's $().attr
 
-//NB: you cannot access css attributes in this fashion.
+```
+c.cx = newx;
+c.cy = newy;
+c.rx = newr;
+```
 
-//use jQuery to do flashy things.
-$(e).animate({cx:newpos}, time);
-$(e).animate({opacity:newval}, time);
-$(e).animate({rotate:10}, time);
-$(e).mousedown(function(event){alert("hi mom!");};
+I suggest using jQuery to do flashy things.
+```
+$(c).animate({cx:newpos}, time);
+$(c).animate({opacity:newval}, time);
+$(c).animate({rotate:10}, time);
+$(c).mousedown(function(event){alert("hi mom!");};
+```
 
-//delete objects by using standard dom stuff. or shortucts
-e.remove();  // is the same as...  g.removeChild(e);
+Dali implements useful shortcuts:
+```
+r.remove();  // is the same as...  g.removeChild(r);
 surface.removeChild(g);
-<<<<<<< HEAD
-//or, use the remove shortcut:
-e.remove(); // === e.parentNode.remove(e);
+```
 
-=======
-//or, shortcut!
->>>>>>> newdali
+```
+t.applytransform(dali.matrix("translate", dx, dy));
+```
 
-//transformations.  Use dali.XXXX where XXXX is the transformation.
+you can alternatively use the following transformations directly:
+applied transformations are cumulative, direct transformations
+will bash previous direct transforms
 
-e.applytransform(dali.matrix("translate", dx, dy));
+```
+t.scale = scaling;
+t.rotate = rotation;
+t.dx = dx;
+t.dy = dy;
+```
 
-//you can alternatively use the following transformations directly:
-//applied transformations are cumulative, direct transformations
-//will bash previous direct transforms
+again, jQuery can be used to do flashy things.
+```
+$(t).animate({rotation})
+```
 
-e.scale = scaling;
-e.rotate = rotation;
-e.dx = dx;
-e.dy = dy;
+Code Reference
+--------------
 
-//transformations are performed in the order of: scale, rotate, translate, applied
-
-
-Reference
----------
+### dali general objects and methods
 
 ```
 dali 
@@ -88,3 +104,40 @@ dali.create(parent, tag)
 create a tag in the DOM attached to parent.  Also attaches "svgparent" member to this tag
 which corresponds to top level svg tag which contains this tag.  Usually this function
 will be automatically called.
+
+### dali math objects
+dali math objects require at least one instance running to properly function.
+
+```
+dali.point(x,y)
+```
+creates an SVGPoint object corresponding to (x,y)
+
+```
+dali.rect(left, top, right, bottom)
+```
+creates an SVGRect object corresponding to (left, top, right, bottom)
+
+```
+dali.rrect(left, top, width, height)
+```
+creates an SVGRect object corresponding to (left, top, left + width, top + height). compare to `dali.rrect()`
+
+```
+dali.matrix()
+dali.matrix(mtx)
+dali.matrix("translate", x, y)
+dali.matrix("scale", s)
+dali.matrix("scale", x, y)
+dali.matrix("rotate", t, x, y)
+dali.matrix("skew", "x", s)
+dali.matrix("skew", "y", s)
+dali.matrix("skewx", s)
+dali.matrix("skewy", s)
+dali.matrix("flip", "x")
+dali.matrix("flip", "y")
+dali.matrix("flipx")
+dali.matrix("flipy")
+```
+creates an SVGMatrix object.  Passing nothing results in the identity; passing a matrix copies the matrix, all other
+commands require passing a string descriptor (or two in the case of axis-dependent transform) plus values.
