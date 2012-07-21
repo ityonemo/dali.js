@@ -70,13 +70,13 @@ $(c).mousedown(function(event){alert("hi mom!");};
 
 ### transformations
 
+you may set an object's _master transform_ as follows (use dali math, as seen below):
 ```
 t.applytransform(dali.matrix("translate", dx, dy));
 ```
 
-you can alternatively use the following transformations directly:
-applied transformations are cumulative, direct transformations
-will bash previous direct transforms
+you can alternatively use the following _animateable_ transformations.  Note these are applied AFTER
+the master transform.  Base object -> scaling -> rotation -> translation.
 
 ```
 t.scale = scaling;
@@ -103,7 +103,7 @@ dali
 (singleton of object _Dali_): main object encapsulating the library namespace.
 
 ```
-dali.SVG(parent, width, height, id, cl)
+dali.SVG(parent, [width, height,] id, cl)
 ```
 create an `<svg>` tag in the DOM, imbue it with
 _width_ and _height_ in the inline style, and it should have id _id_ and class _cl_.
@@ -117,7 +117,7 @@ which corresponds to top level svg tag which contains this tag.  Usually this fu
 will be automatically called.
 
 ### dali math objects
-dali math objects require at least one instance running to properly function.
+dali math objects require at least one instance of dali.SVG running to properly function.
 
 ```
 dali.point(x,y)
@@ -152,3 +152,65 @@ dali.matrix("flipy")
 ```
 creates an SVGMatrix object.  Passing nothing results in the identity; passing a matrix copies the matrix, all other
 commands require passing a string descriptor (or two in the case of axis-dependent transform) plus values.
+
+### dali prototype modification methods
+
+dali contains special commands that are used to 'brand' class prototypes with certain attributes.
+
+```
+dali.brandTransform(obj, transformation, val)
+dali.brandAccessor(obj, name, val, nonnumeric)
+dali.brandByArray(obj, array)
+```
+brandTransform is intended to imbue an SVGElement object with the ability to use animateable transform.
+brandAccessor brands an object with svg accessors.
+brandByArray takes an array of svg accessor definitions and brands them.
+
+SVGPathElement, SVGCircleElement, SVGEllipseElement, SVGImageElement, SVGRectElement, and SVGTextElement are all branded
+with accessors corresponding to their svg properties.
+
+```
+dali.makeCreator(obj, tag)
+dali.makeCreatorByArray(obj, array)
+```
+generates a method in obj which creates a child element creating the named tag.  obj is going to be the SVGGElement and
+SVGSVGElement.  MakeCreatorByArray allows the mass assignment of methods by passing an array of strings.
+
+```
+SVGGElement.prototype.clear()
+SVGSVGElement.prototype.clear()
+```
+clears the group or svg element of all of its children.
+
+```
+SVGTextElement.prototype.text
+```
+mapped to SVGTextElement.prototype.textContent
+
+```
+SVGElement.prototype.remove()
+```
+shortcut for `this.parent.remove(this)`
+
+```
+SVGElement.prototype.applytransform(transformation, clobber)
+```
+Applys a transformation to the non-animateable transformation stack.
+
+```
+SVGElement.prototype.realBBox()
+SVGElement.prototype.left
+SVGElement.prototype.top
+SVGElement.prototype.right
+SVGElement.prototype.bottom
+SVGElement.prototype.width
+SVGElement.prototype.height
+```
+Calculates the real bounding box of the object relative to the parent SVG object.  Also overrides the prototypes
+for left, top, right, bottom, width, and height values.
+
+```
+SVGElement.prototype.setdrag(ondragend, ondragmove, ondragstart)
+```
+Assigns the ondragend, ondragmove, and ondragstart methods for any given svg element.
+

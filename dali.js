@@ -17,17 +17,32 @@ var dali = new function Dali()
 
   this.SVG = function(parent, width, height, id, cl)
   {
-    //input error checking:
-    width = parseInt(width);
-    height = parseInt(height);
-    if (isNaN(width) || isNaN(height))
-      throw new Error("width and height must be integer values");
-
     //create the object in the DOM.
     var svgobject = document.createElementNS("http://www.w3.org/2000/svg","svg");
     //set the important svg properties.
     svgobject.setAttribute("version", "1.1");
     svgobject.setAttribute("style","overflow-x: hidden; overflow-y: hidden; position:relative");
+
+    //input error checking:
+    width = parseInt(width);
+    height = parseInt(height);
+    if (isNaN(width))
+    {
+      //check the condition that we aren't passing a width and height.
+      id = width;
+      cl = height;
+      width = undefined;
+      height = undefined;
+    }
+
+    //brand the object with the id and class.
+    if (id) svgobject.setAttribute("id",id);
+    if (cl) svgobject.setAttribute("class", cl)
+
+    if (!width)
+      width = svgobject.getBoundingClientRect().width;
+    if (!height)
+      height = svgobject.getBoundingClientRect().height;
 
     //modify basic attributes of the svg element.
     delete svgobject.width;
@@ -42,17 +57,13 @@ var dali = new function Dali()
     svgobject.width = width;
     svgobject.height = height;
 
-    //brand the object with the id and class.
-    if (id) svgobject.setAttribute("id",id);
-    if (cl) svgobject.setAttribute("class", cl)
-
     //add the svg object to the parent
     parent.appendChild(svgobject);
 
     //record the parent object
-    this.svgparent = parent;
+    svgobject.svgparent = svgobject;
 
-    //store the svg object in dali.instances
+    //store the svg object in dali.instance
     dali.instance = svgobject;
 
     //return value
@@ -186,7 +197,8 @@ dali.brandTransform = function(obj, transformation, val)
     function(x)
     {
       if (isNaN(x)) throw new Error("transformations must be numeric values.");
-      this["_" + transformation] = x; this.applytransform();
+      this["_" + transformation] = x; //set the internal variable.
+      this.settransforms();           //push the changes to the DOM.
     });
 };
 
@@ -228,9 +240,9 @@ dali.brandByArray(SVGImageElement, [["x", 0],["y", 0],["width", 0],["height",0],
 dali.brandByArray(SVGRectElement, [["x", 0],["y", 0],["width", 0],["height",0],["r",0]]);
 dali.brandByArray(SVGTextElement, [["x", 0],["y", 0]]);
 
-dali.makeCreator = function(obj, tag)
+dali.makeCreator = function(obj, tag, alias)
 {
-  obj.prototype[tag] = function(o)
+  obj.prototype[alias ? alias : tag] = function(o)
   {
     var tgt = dali.create(tag, this);
     if (o) tgt.transfer(o);
@@ -249,6 +261,10 @@ tagarray = ["g","path", "circle", "ellipse", "image", "rect", "text"];
 dali.makeCreatorsByArray(SVGGElement, tagarray);
 dali.makeCreatorsByArray(SVGSVGElement, tagarray);
 
+// SVG SVG & G element "group" alias hacks
+dali.makeCreator(SVGSVGElement, "g", "group");
+dali.makeCreator(SVGGElement, "g", "group");
+
 //create "clear" functionality for both the primary SVG element as well as the group element.
 SVGSVGElement.prototype.clear =
 SVGGElement.prototype.clear = function()
@@ -259,112 +275,123 @@ SVGGElement.prototype.clear = function()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // SVG textelement hack
+
 SVGTextElement.prototype.__defineGetter__("text", function(){return this.textContent;});
 SVGTextElement.prototype.__defineSetter__("text", function(v){return this.textContent = v;});
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// GENERAL EXTENSIONS TO ALL SVGElements:
+// GENERAL Adding extensions to various SVG elements:
 
-SVGElement.prototype.transfer = function(from)
+dali.brandfunctions = function(obj)
 {
-  for (prop in from)
-    this[prop] = from[prop];
+  obj.prototype.transfer = function(from)
+  {
+    for (prop in from)
+      this[prop] = from[prop];
+  };
+
+  obj.prototype.remove = function()
+  {
+    this.parentNode.removeChild(this);
+  };
+
+  obj.prototype.applytransform = function(transformation, clobber)
+  {
+    if (!this.currenttransform || clobber)
+      this.currenttransform = dali.matrix();
+    this.currenttransform = this.currenttransform.multiply(transformation);
+    this.settransforms();
+  },
+
+  obj.prototype.settransforms = function()
+  {
+    var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
+    var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
+    var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
+
+    this.setAttribute("transform", translate + rotate + scale + (this.currenttransform ? this.currenttransform.toString() : ""));
+  }
+
+  obj.prototype.realBBox = function()
+  //this is a hack to find the real bounding box after all transformations have been completed.
+  {
+    var thisbox = this.getBoundingClientRect();
+    var parbox = this.svgparent.getBoundingClientRect();
+    return dali.rrect(thisbox.left - parbox.left + this.svgparent.scrollLeft, thisbox.top - parbox.top + this.svgparent.scrollTop, thisbox.width, thisbox.height);
+  }
+
+  obj.prototype.__defineGetter__("left", function(){return this.realBBox().left;});
+  obj.prototype.__defineGetter__("right", function(){return this.realBBox().right;});
+  obj.prototype.__defineGetter__("top", function(){return this.realBBox().top;});
+  obj.prototype.__defineGetter__("bottom", function(){return this.realBBox().bottom;});
+  obj.prototype.__defineGetter__("width", function(){return this.getBoundingClientRect().width;});
+  obj.prototype.__defineGetter__("height", function(){return this.getBoundingClientRect().height;});
+
+  ////////////////////////////////////////////////////////////////////////////
+  // DRAG/DROP FUNCTIONALITY
+
+  obj.prototype.setdrag = function(ondragend, ondragmove, ondragstart)
+  {
+    this.ondragend = ondragend;
+    this.ondragmove = ondragmove;
+    this.ondragstart = ondragstart;
+
+    this.addEventListener("mousedown", this.registerdrag);
+  };
+
+  obj.prototype.registerdrag = function(event)
+  {
+    dali.dragobject = this;
+    dali.dragoriginX = event.clientX;
+    dali.dragoriginY = event.clientY;
+    window.addEventListener("mousemove", dali.dragobject.dragmove);
+    window.addEventLIstener("mouseup", dali.dragobject.dragup);
+  };
+
+  obj.prototype.dragmove = function(event)
+  {
+    event.dx = event.clientX - dali.dragoriginX;
+    event.dy = event.clientY - dali.dragoriginY;
+
+    if (!dali.dragging)
+    {
+      if (Math.abs(event.dx) + Math.abs(event.dy) > dali.settings.dragradius)
+      {
+        dali.dragging = true;
+        if (dali.dragobject.ondragstart)
+          dali.dragobject.ondragstart(event);
+      }
+    } else
+    {
+      var sp = dali.dragobject.svgparent;
+      var box = sp.getBoundingClientRect();
+      if (dali.dragobject.ondragmove)
+        dali.dragobject.ondragmove(event.clientX - box.left + sp.scrollLeft, event.clientY - box.top + sp.scrollTop, event);
+    }
+  };
+
+  obj.prototype.dragup = function(event)
+  {
+    if (dali.dragging)
+    { //unregister event listeners
+      if (dali.dragobject.ondragend)
+        dali.dragobject.ondragend(event);
+      dali.dragging = false;
+      window.removeEventListener("mousemove", dali.dragobject.dragmove);
+      window.removeEventListener("mouseup", dali.dragobject.dragup);
+      dali.dragobject = undefined;
+    }
+  };
 };
 
-SVGElement.prototype.remove = function()
-{
-  this.parentNode.removeChild(this);
-}
-
-SVGElement.prototype.applytransform = function(transformation, clobber)
-{
-  if (!this.currenttransform || clobber)
-    this.currenttransform = dali.matrix();
-  this.currenttransform = this.currenttransform.multiply(transformation);
-  this.brandtransform();
-},
-
-SVGElement.prototype.brandtransform = function()
-{
-  var scale = (this._scale != 1) ? "scale(" + this._scale + ")" : "";
-  var rotate = (this._rotate) ? "rotate(" + this._rotate + ")" : "";
-  var translate = (this._dx || this._dy) ? ("translate(" + (this._dx?this._dx:"0") + "," + (this._dy?this._dy:"0") + ")" ) : "";
-
-  this.setAttribute("transform", (this.currenttransform ? this.currenttransform.toString() : "") + translate + rotate + scale);
-}
-
-
-SVGElement.prototype.realBBox = function()
-//this is a hack to find the real bounding box after all transformations have been completed.
-{
-  var thisbox = this.getBoundingClientRect();
-  var parbox = this.svgparent.getBoundingClientRect();
-  return dali.rrect(thisbox.left - parbox.left + this.svgparent.scrollLeft, thisbox.top - parbox.top + this.svgparent.scrollTop, thisbox.width, thisbox.height);
-}
-
-SVGElement.prototype.__defineGetter__("left", function(){return this.realBBox().left;});
-SVGElement.prototype.__defineGetter__("right", function(){return this.realBBox().right;});
-SVGElement.prototype.__defineGetter__("top", function(){return this.realBBox().top;});
-SVGElement.prototype.__defineGetter__("bottom", function(){return this.realBBox().bottom;});
-SVGElement.prototype.__defineGetter__("width", function(){return this.realBBox().width;});
-SVGElement.prototype.__defineGetter__("height", function(){return this.realBBox().height;});
-
-////////////////////////////////////////////////////////////////////////////
-// DRAG/DROP FUNCTIONALITY
-
-SVGElement.prototype.setdrag = function(ondragend, ondragmove, ondragstart)
-{
-  this.ondragend = ondragend;
-  this.ondragmove = ondragmove;
-  this.ondragstart = ondragstart;
-
-  this.addEventListener("mousedown", this.registerdrag);
-}
-
-SVGElement.prototype.registerdrag = function(event)
-{
-  dali.dragobject = this;
-  dali.dragoriginX = event.clientX;
-  dali.dragoriginY = event.clientY;
-  window.addEventListener("mousemove", dali.dragobject.dragmove);
-  window.addEventLIstener("mouseup", dali.dragobject.dragup);
-}
-
-SVGElement.prototype.dragmove = function(event)
-{
-  event.dx = event.clientX - dali.dragoriginX;
-  event.dy = event.clientY - dali.dragoriginY;
-
-  if (!dali.dragging)
-  {
-    if (Math.abs(event.dx) + Math.abs(event.dy) > dali.settings.dragradius)
-    {
-      dali.dragging = true;
-      if (dali.dragobject.ondragstart)
-        dali.dragobject.ondragstart(event);
-    }
-  } else
-  {
-    var sp = dali.dragobject.svgparent;
-    var box = sp.getBoundingClientRect();
-    if (dali.dragobject.ondragmove)
-      dali.dragobject.ondragmove(event.clientX - box.left + sp.scrollLeft, event.clientY - box.top + sp.scrollTop, event);
-  }
-}
-
-SVGElement.prototype.dragup = function(event)
-{
-  if (dali.dragging)
-  { //unregister event listeners
-    if (dali.dragobject.ondragend)
-      dali.dragobject.ondragend(event);
-    dali.dragging = false;
-    window.removeEventListener("mousemove", dali.dragobject.dragmove);
-    window.removeEventListener("mouseup", dali.dragobject.dragup);
-    dali.dragobject = undefined;
-  }
-}
-
+//brand the SVG elements.
+[SVGGElement, 
+ SVGPathElement,
+ SVGCircleElement,
+ SVGEllipseElement,
+ SVGImageElement,
+ SVGRectElement,
+ SVGTextElement].map(dali.brandfunctions);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SVG MATH modifications
