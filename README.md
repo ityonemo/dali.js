@@ -126,11 +126,13 @@ creates an SVGPoint object corresponding to (x,y)
 
 ```
 dali.rect(left, top, right, bottom)
+dali.rect(point1, point2)
 ```
-creates an SVGRect object corresponding to (left, top, right, bottom)
+creates an SVGRect object corresponding to (left, top, right, bottom) or the rect bounded by (point1, point2)
 
 ```
 dali.rrect(left, top, width, height)
+dali.rrect(point1, width, height)
 ```
 creates an SVGRect object corresponding to (left, top, left + width, top + height). compare to `dali.rrect()`
 

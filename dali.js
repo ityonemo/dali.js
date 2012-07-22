@@ -107,8 +107,26 @@ var dali = new function Dali()
       throw new Error("can't make dali objects without an SVG element.");
 
     var rect = dali.instance.createSVGRect();
-    rect.left = left; rect.top = top;
-    rect.right = right; rect.bottom = bottom;
+    //check to see if we are passing two SVGPoints
+    if ((left instanceof SVGPoint) && (top instanceof SVGPoint))
+    {
+      rect.left = Math.min(left.x, right.x);
+      rect.top = Math.min(left.y, right.y);
+      rect.right = Math.max(left.x, right.x);
+      rect.bottom = Math.max(left.y, right.y);
+    }
+    else
+    {
+      if (isNaN(left) || isNaN(top) || isNaN(right) || isNaN(bottom))
+        throw new Error("SVG rects must be created with four numbers");
+
+      rect.left = parseFloat(left); rect.top = parseFloat(top);
+      rect.right = parseFloat(right); rect.bottom = parseFloat(bottom);
+
+      //check to see that our left, right, top, and bottom are okay.
+      if ((rect.left > rect.right) || (rect.top > rect.bottom))
+        throw new Error("SVG rects must be created with correct relative positions.");
+    }
     return rect;
   };
 
@@ -118,8 +136,26 @@ var dali = new function Dali()
       throw new Error("can't make dali objects without an SVG element.");
 
     var rect = dali.instance.createSVGRect();
-    rect.left = left; rect.top = top;
-    rect.width = width; rect.height = height;
+    
+    if ((left instanceof SVGPoint) && !(isNaN(top) || isNaN(width)))
+    {
+      rect.left = left.x;
+      rect.top = left.y;
+      rect.width = parseFloat(top);
+      rect.height = parsFloat(width);
+    }
+    else
+    {
+      if (isNaN(left) || isNaN(top) || isNaN(width) || isNaN(height))
+        throw new Error("SVG rects must be created with four numbers");
+
+      rect.left = parseFloat(left); rect.top = parseFloat(top);
+      rect.width = parseFloat(width); rect.height = parseFloat(height);
+
+      //check to see if our inputs have been valid.
+      if ((rect.width < 0) || (rect.height < 0))
+        throw new Error("SVG rects must be created with nonnegative widths and heights")
+    }
     return rect;
   };
 
@@ -138,9 +174,20 @@ var dali = new function Dali()
     switch (arguments[0].toLowerCase())
     {
       case "translate":
-        matrix = matrix.translate(
-          isNaN(arguments[1]) ? 0: arguments[1],
-          isNaN(arguments[2]) ? 0: arguments[2])
+        if (isNaN(arguments[1]))
+        {
+          if (arguments[1] instanceof SVGPoint)
+            matrix = matrix.translate(arguments[1].x, arguments[1].y);
+          else
+            throw new Error("single argument must be an SVG Point.")
+        }
+        else
+        {
+          if (isNaN(arguments[2]))
+            throw new Error("two arguments must both be numbers.")
+          else 
+            matrix = matrix.translate(parseFloat(arguments[1]), parseFloat(arguments[2]));
+        }
       break;
       case "scale":
         if (isNaN(arguments[1]))
@@ -287,7 +334,55 @@ dali.brandfunctions = function(obj)
   obj.prototype.transfer = function(from)
   {
     for (prop in from)
-      this[prop] = from[prop];
+      switch(prop)
+      {
+        case "center":
+          //check to make sure our destination is compatible and our inputs are ok.
+          if (this.cx && (!isNaN(from.center.x)) && (!isNaN(from.center.y)))
+          {
+            this.cx = parseFloat(from.center.x);
+            this.cy = parseFloat(from.center.y);
+          }
+        break;
+        case "point":
+          //check to make sure our destination is compatible and our inputs are ok.
+          if (this.x && (!isNaN(from.point.x)) && (!isNaN(from.point.y)))
+          {
+            this.x = parseFloat(from.point.x);
+            this.y = parseFloat(from.point.y);
+          }
+        break;
+        case "points":
+          //you can also assign rects with a rect object.
+          if (this.width && (!isNaN(from[0].x)) && (!isNaN(from[0].y)) && (!isNaN(from[1].x)) && (!isNaN(from[1].y)))
+          {
+            this.x = Math.min(parseFloat(from[0].x),parseFloat(from[1].x));
+            this.y = Math.min(parseFloat(from[0].y),parseFloat(from[1].y));
+            this.width = Math.abs(parseFloat(from[0].x) - parseFloat(from[1].x));
+            this.height = Math.abs(parseFloat(from[0].y) - parseFloat(from[1].y));
+          }
+        break;
+        case "radius": //alias for "r"
+          if (this.r && (!isNaN(from.radius)))
+            this.r = parseFloat(from.radius);
+        break;
+        case "rect":
+          if (this.width && (from.rect instanceof SVGRect))  //check to see if our object is compatible.
+          {
+            this.x = from.rect.left;
+            this.y = from.rect.top;
+            this.width = from.rect.width;
+            this.height = from.rect.height;
+          }
+        break;
+        case "id":
+        case "class":
+          this.setAttribute(prop, from[prop]);
+        break;
+        default:
+          if (this[prop])
+            this[prop] = from[prop];
+      }
   };
 
   obj.prototype.remove = function()
