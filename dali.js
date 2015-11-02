@@ -142,7 +142,7 @@ var dali = new function Dali()
       rect.left = left.x;
       rect.top = left.y;
       rect.width = parseFloat(top);
-      rect.height = parsFloat(width);
+      rect.height = parseFloat(width);
     }
     else
     {
